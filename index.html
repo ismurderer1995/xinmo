@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0b0d12">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon.png">
+<title>心魔</title>
+<style>
+:root{
+  --bg:#0b0d12;
+  --card:rgba(255,255,255,.04);
+  --line:rgba(255,255,255,.09);
+  --ink:#e9e4d8;
+  --ink-2:#948b7a;
+  --accent:#c8502e;
+  --accent-soft:rgba(200,80,46,.16);
+  --radius:14px;
+  --serif:"KaiTi","Kaiti SC","STKaiti","Songti SC","SimSun",serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+button{-webkit-tap-highlight-color:transparent}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Noto Sans SC","Microsoft YaHei",sans-serif;
+  color:var(--ink);font-size:16px;line-height:1.65;
+  background:radial-gradient(1200px 620px at 50% -12%,#181c28 0%,var(--bg) 58%) fixed,var(--bg);
+}
+body::before{
+  content:"";position:fixed;inset:0;pointer-events:none;opacity:.55;
+  background-image:
+    radial-gradient(2px 2px at 15% 22%,rgba(233,228,216,.4),transparent 60%),
+    radial-gradient(1.5px 1.5px at 32% 12%,rgba(233,228,216,.32),transparent 60%),
+    radial-gradient(1.5px 1.5px at 55% 28%,rgba(233,228,216,.26),transparent 60%),
+    radial-gradient(2px 2px at 74% 15%,rgba(233,228,216,.34),transparent 60%),
+    radial-gradient(1px 1px at 88% 32%,rgba(233,228,216,.3),transparent 60%),
+    radial-gradient(1.5px 1.5px at 45% 8%,rgba(233,228,216,.3),transparent 60%),
+    radial-gradient(1px 1px at 8% 46%,rgba(233,228,216,.24),transparent 60%),
+    radial-gradient(1.5px 1.5px at 66% 43%,rgba(233,228,216,.22),transparent 60%);
+}
+.wrap{max-width:480px;margin:0 auto;padding:0 16px calc(78px + env(safe-area-inset-bottom));position:relative;z-index:1}
+
+.page{display:none}
+.page.active{display:block;animation:rise .3s ease}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+/* ---------- 召问 ---------- */
+.ask-hero{text-align:center;padding:13vh 0 40px}
+.ask-title{font-family:var(--serif);font-size:27px;letter-spacing:3px;line-height:1.8}
+.ask-rule{width:30px;height:2px;background:var(--accent);margin:20px auto 0;opacity:.75;border-radius:2px}
+.ask-panel{display:none}
+.ask-panel.on{display:flex;flex-direction:column;min-height:calc(100vh - 170px)}
+textarea{
+  width:100%;border:1px solid var(--line);border-radius:10px;padding:12px 14px;
+  font-size:16px;font-family:inherit;color:var(--ink);background:rgba(255,255,255,.04);
+  min-height:96px;resize:vertical;line-height:1.7;
+}
+textarea:focus{outline:none;border-color:var(--accent)}
+textarea::placeholder{color:#5c564a}
+.btn-primary{
+  display:none;width:100%;padding:15px;border:none;border-radius:10px;
+  background:var(--accent);color:#f5efe4;font-size:16px;font-family:inherit;
+  letter-spacing:6px;cursor:pointer;margin-top:18px;
+}
+.btn-primary.show{display:block;animation:rise .4s ease}
+.btn-primary:active{opacity:.85}
+.btn-ghost{
+  display:block;width:100%;margin-top:16px;padding:11px;border-radius:10px;
+  background:transparent;border:1px solid var(--line);color:var(--ink-2);
+  font-size:14px;font-family:inherit;letter-spacing:3px;cursor:pointer;
+}
+.ask-err{display:none;color:var(--accent);font-size:13px;margin-top:12px;letter-spacing:1px;text-align:center}
+.ask-back{margin:16px 0 0;background:none;border:none;color:var(--ink-2);font-size:13px;letter-spacing:2px;cursor:pointer;font-family:inherit;align-self:center}
+@keyframes shake{0%,100%{transform:none}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.shake{animation:shake .3s ease}
+
+/* ---------- 判罪结果 ---------- */
+.verdict{text-align:center;padding:8px 0 18px}
+.vname{font-family:var(--serif);font-size:42px;letter-spacing:8px;color:var(--accent);line-height:1.3}
+.vstage{font-size:13px;color:var(--ink-2);letter-spacing:2px;margin-top:8px}
+.v-chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:6px 0 14px}
+.v-chip{background:var(--card);border:1px solid var(--line);color:var(--ink);font-family:inherit;border-radius:999px;cursor:pointer}
+.v-chip:active{border-color:var(--accent);color:var(--accent)}
+
+/* ---------- 通用 ---------- */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:12px}
+.empty{text-align:center;color:var(--ink-2);font-size:14px;padding:36px 20px;line-height:2.1}
+.chip{font-size:11.5px;color:var(--ink-2);border:1px solid var(--line);border-radius:999px;padding:2px 10px}
+
+/* ---------- 内视 · 养成场景 ---------- */
+.scene{position:relative;height:430px;border:1px solid var(--line);border-radius:var(--radius);background:radial-gradient(320px 220px at 50% 52%,rgba(200,80,46,.07),transparent 70%),var(--card);overflow:hidden;margin-bottom:12px}
+#cultivator{position:absolute;left:50%;top:52%;transform:translate(-50%,-50%);width:96px;animation:breath 4.2s ease-in-out infinite;filter:drop-shadow(0 0 14px rgba(233,228,216,.18))}
+@keyframes breath{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.05)}}
+.sdemon{position:absolute;transform:translate(-50%,-50%);cursor:pointer;transition:left 3.2s ease-in-out,top 3.2s ease-in-out,font-size .5s ease;filter:drop-shadow(0 0 10px rgba(200,80,46,.45));user-select:none;-webkit-user-select:none;z-index:2}
+.sdemon:active{filter:drop-shadow(0 0 18px rgba(200,80,46,.8))}
+@keyframes gulp{0%{transform:translate(-50%,-50%) scale(1)}40%{transform:translate(-50%,-50%) scale(1.5)}100%{transform:translate(-50%,-50%) scale(1)}}
+.sdemon.gulp{animation:gulp .55s ease}
+.toast{position:absolute;transform:translate(-50%,-100%);font-family:var(--serif);font-size:13px;color:var(--accent);letter-spacing:2px;white-space:nowrap;animation:toastup 1.6s ease forwards;pointer-events:none;z-index:3}
+@keyframes toastup{0%{opacity:0;margin-top:0}15%{opacity:1}100%{opacity:0;margin-top:-34px}}
+.sleeping{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.sleeping .chip{opacity:.55}
+.dinfo-card .dtop{margin-bottom:0}
+.dcard{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:12px}
+.dtop{display:flex;align-items:flex-start;gap:12px}
+.dform{flex:none;width:48px;height:48px;display:flex;align-items:center;justify-content:center;font-size:26px;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:12px}
+.dinfo{flex:1;min-width:0}
+.dname{font-family:var(--serif);font-size:18px;letter-spacing:1px}
+.dstage{font-size:12px;color:var(--ink-2);margin-left:9px;letter-spacing:3px}
+.dmech{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}
+.dlv{flex:none;font-family:var(--serif);color:var(--accent);font-size:15px;letter-spacing:1px}
+.dprog{display:flex;align-items:center;gap:10px;margin-top:15px}
+.dtrack{flex:1;height:6px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden}
+.dfill{height:100%;background:var(--accent);border-radius:3px;box-shadow:0 0 6px rgba(200,80,46,.6);transition:width .5s ease}
+.dnum{flex:none;font-size:12px;color:var(--ink-2);font-variant-numeric:tabular-nums}
+
+
+/* ---------- 最近异动 ---------- */
+.rl{display:flex;align-items:baseline;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+.rl:last-child{border-bottom:none}
+.rl-d{flex:none;color:var(--ink-2);font-size:12px;font-variant-numeric:tabular-nums}
+.rl-n{flex:none;font-family:var(--serif);color:var(--accent);letter-spacing:1px}
+.rl-t{flex:1;min-width:0;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+
+.rl-x{flex:none;background:none;border:1px solid var(--line);color:var(--ink-2);border-radius:8px;width:24px;height:24px;font-size:13px;line-height:1;cursor:pointer;font-family:inherit}
+.rl-x:active{border-color:var(--accent);color:var(--accent)}
+
+
+.rl-del{flex:none;background:none;border:1px solid var(--line);color:var(--ink-2);border-radius:8px;width:26px;height:26px;font-size:13px;cursor:pointer;font-family:inherit;line-height:1}
+.rl-del.armed{border-color:var(--accent);color:var(--accent);width:auto;padding:0 8px;font-size:12px}
+
+/* ---------- 修炼 ---------- */
+.acard{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:15px 16px;margin-bottom:12px;display:flex;gap:12px;align-items:flex-start}
+.aemo{flex:none;width:40px;height:40px;display:flex;align-items:center;justify-content:center;font-size:22px;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:10px}
+.atext{font-size:14.5px;line-height:1.85;padding-top:7px}
+.aname{color:var(--accent);font-family:var(--serif);letter-spacing:1px}
+
+/* ---------- 底部标签栏 ---------- */
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:10;background:rgba(11,13,18,.86);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--line)}
+.tabbar-inner{max-width:480px;margin:0 auto;display:flex;padding-bottom:env(safe-area-inset-bottom)}
+.tab{flex:1;border:none;background:none;padding:7px 0 5px;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--ink-2);font-size:11px;font-family:inherit;letter-spacing:2px;cursor:pointer}
+.tab svg{width:21px;height:21px}
+.tab.active{color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- 心魔 -->
+  <section class="page active" id="page-ask">
+    <div class="ask-panel on" id="ask-input">
+      <div class="ask-hero">
+        <p class="ask-title">何方心魔作祟？</p>
+        <div class="ask-rule"></div>
+      </div>
+      <textarea id="f-desc" placeholder="发生了什么、当时脑子里在想什么，随便写。心魔自会现形。" style="min-height:170px"></textarea>
+      <p class="ask-err" id="desc-err">写点什么再召唤，心魔不听空话。</p>
+      <button class="btn-primary" id="btn-summon" type="button">召唤心魔</button>
+    </div>
+    <div class="ask-panel" id="ask-result"></div>
+  </section>
+
+  <!-- 内视 -->
+  <section class="page" id="page-meet" style="padding-top:14px">
+    <div class="card empty" id="meet-hint" style="display:none">
+      心魔尚在沉睡。<br>去「心魔」页喂它第一口情绪。
+      <button class="btn-ghost go-ask" type="button">前往心魔</button>
+    </div>
+    <div class="scene" id="scene">
+      <div id="cultivator">
+        <svg viewBox="0 0 100 100" fill="none" stroke="#e9e4d8" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="50" cy="26" r="9"/>
+          <path d="M50 37 Q50 50 50 58"/>
+          <path d="M28 76 Q38 58 50 58 Q62 58 72 76"/>
+          <path d="M22 78 Q50 66 78 78"/>
+          <circle cx="50" cy="62" r="3" stroke-width="1.6"/>
+        </svg>
+      </div>
+    </div>
+    <div class="sleeping" id="sleeping"></div>
+    <div class="card dinfo-card" id="dinfo" style="display:none"></div>
+    <div id="recent-list"></div>
+  </section>
+
+  <!-- 修炼 -->
+  <section class="page" id="page-advice" style="padding-top:14px">
+    <div id="advice-list"></div>
+  </section>
+
+</div>
+
+<nav class="tabbar">
+  <div class="tabbar-inner">
+    <button class="tab active" data-page="ask">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.7 3.6a2.1 2.1 0 0 1 3 3L7.5 19.8 3 21l1.2-4.5Z"/></svg>
+      心魔
+    </button>
+    <button class="tab" data-page="meet">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+      内视
+    </button>
+    <button class="tab" data-page="advice">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/><path d="M9 6h11"/><path d="M9 12h11"/><path d="M9 18h11"/></svg>
+      修炼
+    </button>
+  </div>
+</nav>
+
+<script>
+/* ---------- 预设库 ---------- */
+const DEMONS=[
+  {id:'aoman',  name:'傲慢', mech:['自我服务偏差','优越感幻觉'],   jn:'下次动手前，先写下"这事要是搞砸，我的三条责任是什么"。写不出，就先别动。'},
+  {id:'jidu',   name:'嫉妒', mech:['社会比较','相对剥夺感'],       jn:'别人得到好处时，别比结果，去拆方法：他具体做对了哪几步，能抄就抄，生气最亏。'},
+  {id:'baonu',  name:'暴怒', mech:['杏仁核劫持','归因偏差'],       jn:'火上来之后的30分钟，不做决定、不回消息、不说话，就干等。'},
+  {id:'landuo', name:'懒惰', mech:['即时满足偏好','任务厌恶'],     jn:'跟自己说只做2分钟。想停就停，但多数时候你会继续做下去。'},
+  {id:'tanlan', name:'贪婪', mech:['多巴胺驱动的冒险偏好','近期偏差'], jn:'立条死规矩：任何一笔投入不超过总资金5%，规矩要写在冲动之前。'},
+  {id:'baoshi', name:'暴食', mech:['情绪性进食','压力代偿'],       jn:'想吃先喝一大杯水，等10分钟，还饿才吃。'},
+  {id:'seyu',   name:'色欲', mech:['多巴胺渴求','线索触发'],       jn:'别考意志力，直接断线索：App删掉、网页拉黑、手机放另一个房间。'},
+];
+const KW={
+  aoman:['看不起','傲慢','自负','自以为是','高人一等','不屑','显摆','面子','他懂什么','不听我的','我早说过','嘲笑','鄙视','装什么'],
+  jidu:['嫉妒','眼红','凭什么','见不得','酸了','攀比','羡慕','为什么他能','别人都有','他都能'],
+  baonu:['气死','发火','吵架','骂','砸','忍不了','火大','暴躁','上头','吼','愤怒','气死我了','烦躁'],
+  landuo:['拖延','不想动','没动力','明天再说','刷手机','躺着','摸鱼','赖床','懒得','没劲','不想做','不想干'],
+  tanlan:['加仓','梭哈','翻倍','再赚','不够','满仓','追高','赚更多','赌','多买点','抄底','all in'],
+  baoshi:['暴食','夜宵','零食','奶茶','火锅','烧烤','吃撑','炸鸡','甜品','汉堡','没忍住吃'],
+  seyu:['色情','黄片','忍不住看','擦边','小姐姐','撸','看片','美女直播'],
+};
+const NUMS=['一','二','三','四','五','六','七','八','九','十'];
+
+/* ---------- 数据 ---------- */
+const LS_KEY='xinmo_records_v1';
+let records=(()=>{try{return JSON.parse(localStorage.getItem(LS_KEY))||[]}catch(e){return[]}})();
+const save=()=>localStorage.setItem(LS_KEY,JSON.stringify(records));
+
+/* ---------- 养成规则 ---------- */
+const growthOf=id=>records.reduce((n,r)=>n+(r.tags.includes(id)?1:0),0);
+const levelOf=g=>Math.floor(g/10)+1;
+const stageOf=lv=>lv>=10?'化形':lv>=5?'实体':lv>=3?'成形':'雾气';
+const emojiOf=lv=>lv>=10?'👺':lv>=5?'👹':lv>=3?'👤':'🌫️';
+const sizeOf=lv=>30+lv*7;
+const demonSize=g=>{const lv=levelOf(g);return sizeOf(lv)+(g%10)*1.6;};
+
+/* ---------- 统计工具 ---------- */
+function daysBetween(a,b){
+  const x=new Date(a.getFullYear(),a.getMonth(),a.getDate());
+  const y=new Date(b.getFullYear(),b.getMonth(),b.getDate());
+  return Math.round((x-y)/864e5);
+}
+const sameMonth=(a,b)=>a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth();
+const bucketOf=h=>h<6?'凌晨':h<12?'上午':h<18?'下午':'晚间';
+
+/* ---------- 页面切换 ---------- */
+const tabs=document.querySelectorAll('.tab');
+function switchTo(page){
+  document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id==='page-'+page));
+  tabs.forEach(t=>t.classList.toggle('active',t.dataset.page===page));
+  window.scrollTo(0,0);
+  if(page==='meet')renderMeet();
+  if(page==='advice')renderAdvice();
+}
+tabs.forEach(t=>t.addEventListener('click',()=>switchTo(t.dataset.page)));
+document.querySelectorAll('.go-ask').forEach(b=>b.addEventListener('click',()=>switchTo('ask')));
+
+/* ---------- 判官：本地定罪 ---------- */
+function judge(text){
+  let best=null,bestN=0;
+  DEMONS.forEach(d=>{
+    const n=KW[d.id].filter(k=>text.includes(k)).length;
+    if(n>bestN||(n===bestN&&n>0&&best&&growthOf(d.id)>growthOf(best.id))){best=d;bestN=n;}
+  });
+  return best;
+}
+
+const descEl=document.getElementById('f-desc');
+let lastIdx=-1;
+descEl.addEventListener('input',()=>{
+  document.getElementById('btn-summon').classList.toggle('show',descEl.value.trim().length>0);
+  document.getElementById('desc-err').classList.remove('shake');
+});
+
+document.getElementById('btn-summon').addEventListener('click',()=>{
+  const text=descEl.value.trim();
+  if(text.length===0){
+    const e=document.getElementById('desc-err');
+    e.classList.remove('shake');void e.offsetWidth;e.classList.add('shake');
+    return;
+  }
+  const d=judge(text);
+  records.push({ts:new Date().toISOString(),tags:d?[d.id]:[],desc:text,intensity:null});
+  save();
+  lastIdx=records.length-1;
+  renderVerdict(d,text,false);
+});
+
+function renderVerdict(d,text,manual){
+  const box=document.getElementById('ask-result');
+  const g=d?growthOf(d.id):0,lv=d?levelOf(g):0;
+  box.innerHTML=`
+    <div class="ask-hero">
+      <p class="ask-title">${d?(manual?'改判为':'现形'):'未能现形'}</p>
+      <div class="ask-rule"></div>
+    </div>
+    ${d?`
+    <div class="verdict">
+      <div class="vname">${d.name}</div>
+      <div class="vstage">${stageOf(lv)} · Lv.${lv} · 已喂养 ${g} 次</div>
+      <div class="dmech" style="justify-content:center;margin-top:10px">${d.mech.map(m=>`<span class="chip">${m}</span>`).join('')}</div>
+    </div>
+    <div class="card">
+      <p style="font-size:12px;color:var(--ink-2);letter-spacing:2px;margin-bottom:8px">修炼方案</p>
+      <p style="font-size:15px;line-height:1.9">${d.jn}</p>
+    </div>`:`
+    <div class="card" style="text-align:center;color:var(--ink-2);font-size:14px;line-height:2">这段描述里没认出熟悉的罪。<br>手动指认一尊：</div>`}
+    <div class="v-chips" id="v-chips" ${d?'style="display:none"':''}>${DEMONS.map(x=>`<button class="chip v-chip" data-id="${x.id}" type="button" style="font-size:13px;padding:6px 14px">${x.name}</button>`).join('')}</div>
+    <button class="btn-primary show" id="btn-again" type="button">再记一条</button>
+    ${d?'<button class="ask-back" type="button" id="btn-rejudge">判错了？改判</button>':''}`;
+  document.getElementById('ask-input').classList.remove('on');
+  box.classList.add('on');
+  window.scrollTo(0,0);
+
+  document.getElementById('btn-again').addEventListener('click',()=>{
+    descEl.value='';
+    document.getElementById('btn-summon').classList.remove('show');
+    box.classList.remove('on');box.innerHTML='';
+    document.getElementById('ask-input').classList.add('on');
+    window.scrollTo(0,0);
+  });
+  const rj=document.getElementById('btn-rejudge');
+  if(rj)rj.addEventListener('click',()=>{
+    const ch=document.getElementById('v-chips');
+    ch.style.display=ch.style.display==='none'?'flex':'none';
+  });
+  box.querySelectorAll('.v-chip').forEach(c=>c.addEventListener('click',()=>{
+    const nd=DEMONS.find(x=>x.id===c.dataset.id);
+    if(lastIdx>=0&&records[lastIdx]){records[lastIdx].tags=[nd.id];save();}
+    renderVerdict(nd,text,true);
+  }));
+}
+
+/* ---------- 内视 · 养成场景 ---------- */
+const scene=document.getElementById('scene');
+let driftTimer=null,selectedId=null;
+
+function place(el){
+  const w=scene.clientWidth,h=scene.clientHeight;
+  const ang=Math.random()*Math.PI*2;
+  const r=Math.min(w,h)*0.27+Math.random()*Math.min(w,h)*0.16;
+  const x=Math.max(34,Math.min(w-34,w/2+Math.cos(ang)*r));
+  const y=Math.max(40,Math.min(h-40,h/2+Math.sin(ang)*r*0.78));
+  el.style.left=x+'px';el.style.top=y+'px';
+}
+function toast(anchor,text){
+  const t=document.createElement('div');
+  t.className='toast';t.textContent=text;
+  t.style.left=anchor.style.left;t.style.top=anchor.style.top;
+  scene.appendChild(t);
+  setTimeout(()=>t.remove(),1600);
+}
+
+function renderMeet(){
+  const awakened=DEMONS.filter(d=>growthOf(d.id)>0);
+  document.getElementById('meet-hint').style.display=awakened.length?'none':'block';
+  scene.querySelectorAll('.sdemon,.toast').forEach(e=>e.remove());
+  awakened.forEach(d=>{
+    const lv=levelOf(growthOf(d.id));
+    const el=document.createElement('div');
+    el.className='sdemon';el.dataset.id=d.id;
+    el.textContent=emojiOf(lv);
+    el.style.fontSize=demonSize(growthOf(d.id))+'px';
+    el.style.opacity=lv>=3?'1':'.8';
+    place(el);
+    el.addEventListener('click',()=>{selectedId=d.id;feed(d,el);});
+    scene.appendChild(el);
+  });
+  const sleeping=DEMONS.filter(d=>growthOf(d.id)===0);
+  document.getElementById('sleeping').innerHTML=
+    '<span style="font-size:12px;color:var(--ink-2);letter-spacing:2px;width:100%">沉睡中 · 尚未觉醒</span>'+
+    sleeping.map(d=>`<span class="chip">${d.name}</span>`).join('');
+  if(!selectedId||growthOf(selectedId)===0){
+    selectedId=awakened.length?[...awakened].sort((a,b)=>growthOf(b.id)-growthOf(a.id))[0].id:null;
+  }
+  renderDemonInfo();
+  renderRecent();
+  if(driftTimer)clearInterval(driftTimer);
+  driftTimer=setInterval(()=>{scene.querySelectorAll('.sdemon').forEach(place);},3200);
+}
+
+function feed(d,el){
+  records.push({ts:new Date().toISOString(),tags:[d.id],desc:'',intensity:null,feed:true});
+  save();
+  const lv=levelOf(growthOf(d.id));
+  el.style.fontSize=demonSize(growthOf(d.id))+'px';
+  el.textContent=emojiOf(lv);
+  el.classList.remove('gulp');void el.offsetWidth;el.classList.add('gulp');
+  toast(el,'它似乎又壮了一分');
+  renderDemonInfo();
+}
+
+function renderDemonInfo(){
+  const card=document.getElementById('dinfo');
+  const d=DEMONS.find(x=>x.id===selectedId);
+  if(!d){card.style.display='none';return;}
+  const g=growthOf(d.id),lv=levelOf(g);
+  card.style.display='block';
+  card.innerHTML=`<div class="dtop">
+      <div class="dform">${emojiOf(lv)}</div>
+      <div class="dinfo">
+        <div class="dname">${d.name}<span class="dstage">${stageOf(lv)} · 已喂养${g}次</span></div>
+        <div class="dmech">${d.mech.map(m=>`<span class="chip">${m}</span>`).join('')}</div>
+      </div>
+      <div class="dlv">Lv.${lv}</div>
+    </div>
+    <div class="dprog">
+      <div class="dtrack"><div class="dfill" style="width:${g%10*10}%"></div></div>
+      <span class="dnum">${g%10}/10</span>
+    </div>
+    <p style="font-size:13px;color:var(--ink-2);margin-top:12px;line-height:1.9">修炼方案：${d.jn}</p>`;
+}
+
+function renderRecent(){
+  const box=document.getElementById('recent-list');
+  const recent=[...records].reverse().slice(0,8);
+  if(!recent.length){box.innerHTML='';return;}
+  box.innerHTML=`<div class="card" style="padding:12px 16px">
+    <p style="font-size:12px;color:var(--ink-2);letter-spacing:2px;margin-bottom:4px">最近异动</p>
+    ${recent.map((r,i)=>{
+      const idx=records.length-1-i;
+      const d=DEMONS.find(x=>(r.tags||[])[0]===x.id);
+      const dt=new Date(r.ts);
+      const dd=`${dt.getMonth()+1}/${dt.getDate()}`;
+      const txt=(r.desc||'').trim();
+      return `<div class="rl"><span class="rl-d">${dd}</span><span class="rl-n">${d?d.name:'未现形'}</span><span class="rl-t">${txt?txt:'（静观喂养）'}</span><button class="rl-del" data-idx="${idx}" type="button">✕</button></div>`;
+    }).join('')}
+  </div>`;
+  box.querySelectorAll('.rl-del').forEach(b=>b.addEventListener('click',()=>{
+    const idx=+b.dataset.idx;
+    if(b.dataset.armed!=='1'){
+      box.querySelectorAll('.rl-del').forEach(x=>{x.dataset.armed='';x.textContent='✕';});
+      b.dataset.armed='1';b.textContent='确认';
+      setTimeout(()=>{if(b.dataset.armed==='1'){b.dataset.armed='';b.textContent='✕';}},2500);
+      return;
+    }
+    records.splice(idx,1);
+    save();
+    renderMeet();
+  }));
+}
+
+/* ---------- 修炼 · 心法 ---------- */
+function renderAdvice(){
+  const box=document.getElementById('advice-list');
+  if(records.length===0){
+    box.innerHTML=`<div class="card empty">尚无记录，修行未始。<br>先去「心魔」页，写下第一次失控。
+      <button class="btn-ghost go-ask" type="button">前往心魔</button></div>`;
+    box.querySelector('.go-ask').addEventListener('click',()=>switchTo('ask'));
+    return;
+  }
+  const today=new Date();
+  const items=DEMONS.map(d=>{
+    const rs=records.filter(r=>r.tags.includes(d.id)).sort((a,b)=>a.ts<b.ts?-1:1);
+    if(rs.length===0)return null;
+    const dates=rs.map(r=>new Date(r.ts));
+    const last=dates[dates.length-1];
+    const quiet=daysBetween(today,last);
+    let text;
+    if(quiet>=3){
+      text=`此魔已蛰伏<span class="aname">${quiet}</span>日，此式暂可搁置，保持便是修行。`;
+    }else{
+      const monthRs=dates.filter(x=>sameMonth(x,today));
+      let freq,when='';
+      if(monthRs.length>0){
+        freq=`本月现身${monthRs.length}次`;
+        const bc={};
+        monthRs.forEach(x=>{const b=bucketOf(x.getHours());bc[b]=(bc[b]||0)+1});
+        const top=Object.entries(bc).sort((a,b)=>b[1]-a[1])[0][0];
+        when=monthRs.length>=2?`，多在${top}发作`:`，发作于${top}`;
+      }else{
+        freq='本月尚未现身';
+      }
+      text=`${freq}${when}。<br><span style="color:var(--ink-2)">修炼方案</span>：${d.jn}`;
+    }
+    return {total:rs.length,last,text,emoji:emojiOf(levelOf(rs.length)),name:d.name};
+  }).filter(Boolean).sort((a,b)=>b.total-a.total||b.last-a.last);
+
+  box.innerHTML=items.map((it,i)=>`<div class="acard"><div class="aemo">${it.emoji}</div><p class="atext"><span style="font-family:var(--serif);color:var(--accent)">【第${NUMS[i]}式 · ${it.name}】</span>${it.text}</p></div>`).join('');
+}
+</script>
+</body>
+</html>
